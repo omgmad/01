@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>01 Points Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8f8f8;
+    --surface2: #f0f0f0;
+    --border: #e0e0e0;
+    --border2: #cccccc;
+    --text: #0a0a0a;
+    --text2: #444444;
+    --muted: #888888;
+    --accent: #0a0a0a;
+    --green: #00a651;
+    --red: #e8321a;
+    --blue: #0052ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+
+  /* Live badge */
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--green);
+    border: 1px solid var(--green);
+    padding: 2px 7px;
+    animation: livePulse 2s ease-in-out infinite;
+    position: relative;
+  }
+  .live-badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: dotBlink 1.4s ease-in-out infinite;
+  }
+
+  /* Week progress */
+  .info-cell.span2 { grid-column: span 2; }
+  .week-progress-track {
+    height: 4px;
+    background: var(--border2);
+    position: relative;
+    overflow: visible;
+    margin-bottom: 8px;
+  }
+  .week-progress-fill {
+    height: 100%;
+    background: var(--text);
+    position: relative;
+    transition: width 0.5s ease;
+  }
+  .week-progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 50%;
+    transform: translate(50%, -50%);
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--text);
+    box-shadow: 0 0 0 3px rgba(0,166,81,0.25);
+    animation: cursorGlow 2s ease-in-out infinite;
+  }
+  .week-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .week-progress-labels span:nth-child(2) {
+    color: var(--green);
+  }
+
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.65; }
+  }
+  @keyframes dotBlink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  @keyframes cursorGlow {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(0,166,81,0.2); }
+    50% { box-shadow: 0 0 0 5px rgba(0,166,81,0.35); }
+  }
+
+  /* NAV */
+  nav {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  .nav-logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .nav-links a {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-links a.active { color: var(--text); }
+
+  .nav-cta {
+    background: var(--text) !important;
+    color: var(--bg) !important;
+    padding: 7px 14px !important;
+    font-size: 11px !important;
+    letter-spacing: 0.5px !important;
+  }
+  .nav-cta:hover { opacity: 0.8; }
+
+  /* PAGE */
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 64px 32px 100px;
+  }
+
+  /* HEADER */
+  .page-header {
+    margin-bottom: 48px;
+    animation: fadeIn 0.5s ease both;
+  }
+
+  .page-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .page-tag::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 1px;
+    background: var(--muted);
+  }
+
+  h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 600;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 14px;
+  }
+
+  .page-desc {
+    color: var(--text2);
+    font-size: 15px;
+    max-width: 540px;
+    line-height: 1.6;
+  }
+
+  /* POINTS INFO BANNER */
+  .info-banner {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+    animation: fadeIn 0.5s 0.1s ease both;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+
+  .info-cell {
+    padding: 20px 24px;
+    border-right: 1px solid var(--border);
+  }
+  .info-cell:last-child { border-right: none; }
+
+  .info-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .info-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .info-value.green { color: var(--green); }
+  .info-value.accent { color: var(--red); }
+
+  /* GRID LAYOUT */
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+    animation: fadeIn 0.5s 0.2s ease both;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+
+  .calc-cell {
+    background: var(--bg);
+    padding: 28px 28px;
+  }
+
+  .cell-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Inputs */
+  .field-wrap {
+    margin-bottom: 20px;
+  }
+  .field-wrap:last-child { margin-bottom: 0; }
+
+  .field-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border2);
+    background: var(--bg);
+    transition: border-color 0.15s;
+  }
+  .input-row:focus-within {
+    border-color: var(--text);
+  }
+
+  .input-prefix {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    padding: 0 12px;
+    border-right: 1px solid var(--border);
+    height: 42px;
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+  }
+
+  .input-suffix {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 12px;
+    border-left: 1px solid var(--border);
+    height: 42px;
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    white-space: nowrap;
+  }
+
+  input[type="number"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 0 12px;
+    height: 42px;
+    outline: none;
+    -moz-appearance: textfield;
+    width: 100%;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  /* Unit toggle */
+  .unit-toggle {
+    display: flex;
+    border: 1px solid var(--border2);
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .unit-btn {
+    flex: 1;
+    padding: 8px;
+    background: var(--bg);
+    border: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .unit-btn:last-child { border-right: none; }
+  .unit-btn.active {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .unit-btn:hover:not(.active) {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  /* Slider */
+  .slider-wrap { margin-bottom: 0; }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .slider-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--border2);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--text);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--text);
+    transition: box-shadow 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.1), 0 0 0 1px var(--text);
+  }
+
+  .slider-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  .slider-ticks span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* RESULT */
+  .result-block {
+    border: 1px solid var(--border);
+    padding: 36px 32px;
+    margin-bottom: 32px;
+    animation: fadeIn 0.5s 0.3s ease both;
+    opacity: 0;
+    animation-fill-mode: forwards;
+    position: relative;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 28px;
+  }
+
+  .result-main { flex: 1; }
+
+  .result-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .result-amount {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 600;
+    letter-spacing: -2px;
+    color: var(--text);
+    line-height: 1;
+    transition: opacity 0.2s;
+  }
+  .result-amount.flash { animation: flashGreen 0.35s ease; }
+
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+
+  .rstat {
+    padding-right: 24px;
+    border-right: 1px solid var(--border);
+    margin-right: 24px;
+  }
+  .rstat:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+
+  .rstat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .rstat-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  /* POINTS PROGRAM INFO */
+  .program-section {
+    margin-bottom: 32px;
+    animation: fadeIn 0.5s 0.35s ease both;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+
+  .section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .earn-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .earn-card {
+    background: var(--bg);
+    padding: 20px 20px;
+  }
+
+  .earn-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .earn-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+  }
+
+  .earn-desc {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  /* FEE TABLE */
+  .fee-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .fee-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  .fee-table td {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .fee-table tr:last-child td { border-bottom: none; }
+  .fee-table tr:hover td { background: var(--surface); }
+  .fee-table td.green { color: var(--green); font-weight: 500; }
+  .fee-table td.tier { color: var(--text); font-weight: 500; }
+
+  .legal-note {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+    padding: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* REF + SHARE */
+  .action-section {
+    animation: fadeIn 0.5s 0.4s ease both;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+
+  .ref-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 24px 28px;
+    background: var(--text);
+    color: var(--bg);
+    text-decoration: none;
+    transition: opacity 0.15s;
+    margin-bottom: 16px;
+  }
+  .ref-card:hover { opacity: 0.9; }
+
+  .ref-text { }
+  .ref-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    opacity: 0.5;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .ref-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 3px;
+  }
+  .ref-sub {
+    font-size: 12px;
+    opacity: 0.6;
+  }
+  .ref-arrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: 1px solid var(--border2);
+    background: var(--bg);
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .action-btn:hover {
+    border-color: var(--text);
+    color: var(--text);
+    background: var(--surface);
+  }
+  .action-btn.twitter:hover { border-color: #000; background: #000; color: #fff; }
+  .action-btn.telegram:hover { border-color: #0088cc; background: #e8f4fb; color: #0088cc; }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    font-family: 'IBM Plex Mono', monospace;
+    animation: fadeIn 0.5s 0.45s ease both;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 680px) {
+    .page { padding: 32px 16px 80px; }
+    nav { padding: 0 16px; }
+    .info-banner { grid-template-columns: 1fr 1fr; }
+    .info-cell:nth-child(2) { border-right: none; }
+    .info-cell:nth-child(3) { grid-column: span 2; border-top: 1px solid var(--border); border-right: none; }
+    .calc-grid { grid-template-columns: 1fr; }
+    .earn-grid { grid-template-columns: 1fr; }
+    .result-stats { grid-template-columns: 1fr; gap: 16px; }
+    .rstat { border-right: none; margin-right: 0; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .rstat:last-child { border-bottom: none; padding-bottom: 0; }
+    .action-row { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes flashGreen {
+    0% { color: var(--text); }
+    40% { color: var(--green); }
+    100% { color: var(--text); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="https://01.xyz" class="nav-logo" target="_blank">01</a>
+  <div class="nav-links">
+    <a href="https://01.xyz/trade" target="_blank">Trade</a>
+    <a href="https://01.xyz/points" target="_blank" class="active">Points</a>
+    <a href="https://01.xyz/leaderboard" target="_blank">Leaderboard</a>
+    <a href="https://docs.01.xyz" target="_blank">Docs</a>
+    <a href="https://01.xyz/ref/0110" target="_blank" class="nav-cta">Start Trading →</a>
+  </div>
+</nav>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="page-tag">Points Program</div>
+    <h1>Airdrop<br>Calculator</h1>
+    <p class="page-desc">Estimate the value of your 01 Points based on total supply, FDV, and airdrop allocation. Adjust the parameters to model different scenarios.</p>
+  </div>
+
+  <!-- INFO BANNER -->
+  <div class="info-banner">
+    <div class="info-cell">
+      <div class="info-label">Total Supply</div>
+      <div class="info-value accent">10,000,000</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-label">Current Week</div>
+      <div class="info-value" style="display:flex;align-items:center;gap:8px;">
+        4
+        <span class="live-badge">LIVE</span>
+      </div>
+    </div>
+    <div class="info-cell" style="grid-column: span 2;">
+      <div class="info-label" style="margin-bottom:10px;">Program Progress — Week 4 of 30</div>
+      <div class="week-progress-track">
+        <div class="week-progress-fill" style="width: calc(4/30 * 100%)"></div>
+        <div class="week-cursor" style="left: calc(4/30 * 100%)">
+          <div class="week-cursor-dot"></div>
+          <div class="week-cursor-label">W4</div>
+        </div>
+      </div>
+      <div class="week-progress-labels">
+        <span>Week 1</span>
+        <span id="weeksRemain">26 weeks remaining</span>
+        <span>Week 30</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULATOR INPUTS -->
+  <div class="calc-grid">
+    <!-- Left: Your Points + FDV -->
+    <div class="calc-cell">
+      <div class="cell-label">Your Position</div>
+
+      <div class="field-wrap">
+        <label class="field-label">Your Points Balance</label>
+        <div class="input-row">
+          <input type="number" id="userPoints" placeholder="0" min="0">
+          <span class="input-suffix">pts</span>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="field-label">Project FDV</label>
+        <div class="input-row">
+          <span class="input-prefix">$</span>
+          <input type="number" id="fdvInput" placeholder="500" min="1" value="500">
+          <span class="input-suffix" id="fdvUnitLabel">M</span>
+        </div>
+        <div class="unit-toggle">
+          <button class="unit-btn active" data-unit="M" onclick="setUnit('M')">Million (M)</button>
+          <button class="unit-btn" data-unit="B" onclick="setUnit('B')">Billion (B)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Sliders -->
+    <div class="calc-cell">
+      <div class="cell-label">Program Parameters</div>
+
+      <div class="field-wrap slider-wrap">
+        <div class="slider-header">
+          <label class="field-label" style="margin:0">Airdrop % of FDV</label>
+          <span class="slider-val" id="pctDisplay">10%</span>
+        </div>
+        <input type="range" id="airdropPct" min="5" max="50" step="1" value="10">
+        <div class="slider-ticks">
+          <span>5%</span>
+          <span>15%</span>
+          <span>25%</span>
+          <span>35%</span>
+          <span>50%</span>
+        </div>
+      </div>
+
+      <div class="field-wrap" style="margin-top:24px">
+        <label class="field-label">Total Points Supply (Fixed)</label>
+        <div class="input-row" style="opacity:0.6; pointer-events:none;">
+          <input type="number" value="10000000" disabled style="color:var(--muted)">
+          <span class="input-suffix">pts</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-block">
+    <div class="result-row">
+      <div class="result-main">
+        <div class="result-label">Estimated Airdrop Value</div>
+        <div class="result-amount" id="resultAmount">$0.00</div>
+      </div>
+    </div>
+    <div class="result-stats">
+      <div class="rstat">
+        <div class="rstat-label">Your Share</div>
+        <div class="rstat-val" id="sharePercent">0.000000%</div>
+      </div>
+      <div class="rstat">
+        <div class="rstat-label">Airdrop Pool</div>
+        <div class="rstat-val" id="poolSize">$50.00M</div>
+      </div>
+      <div class="rstat">
+        <div class="rstat-label">Value per Point</div>
+        <div class="rstat-val" id="perPoint">$0.0000</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POINTS PROGRAM INFO -->
+  <div class="program-section">
+    <div class="section-title">How to Earn Points</div>
+
+    <div class="earn-grid">
+      <div class="earn-card">
+        <div class="earn-num">01 /</div>
+        <div class="earn-title">Trading Volume</div>
+        <div class="earn-desc">Earn points through organic on-chain trading activity. Both maker and taker volume qualifies. Sybil and self-trading do not earn points.</div>
+      </div>
+      <div class="earn-card">
+        <div class="earn-num">02 /</div>
+        <div class="earn-title">Liquidity Provision</div>
+        <div class="earn-desc">Provide tight liquidity in relevant markets or deposit funds into the vault. Deeper liquidity earns proportionally more.</div>
+      </div>
+      <div class="earn-card">
+        <div class="earn-num">03 /</div>
+        <div class="earn-title">Referrals</div>
+        <div class="earn-desc">Earn a share of the points generated by your referrals. Affiliates earn a higher percentage. Use your ref link below.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEE TIERS -->
+  <div class="program-section" style="animation-delay:0.4s">
+    <div class="section-title">Fee Tiers</div>
+
+    <table class="fee-table">
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th>30-Day Volume</th>
+          <th>Maker Fee</th>
+          <th>Taker Fee</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tier">1</td>
+          <td>≤ $5M</td>
+          <td>0.010%</td>
+          <td>0.035%</td>
+        </tr>
+        <tr>
+          <td class="tier">2</td>
+          <td>> $5M</td>
+          <td>0.005%</td>
+          <td>0.030%</td>
+        </tr>
+        <tr>
+          <td class="tier">3</td>
+          <td>> $25M</td>
+          <td class="green">0.000%</td>
+          <td>0.025%</td>
+        </tr>
+        <tr>
+          <td class="tier">4</td>
+          <td>> $100M</td>
+          <td class="green">0.000%</td>
+          <td>0.023%</td>
+        </tr>
+        <tr>
+          <td class="tier">5</td>
+          <td>> $1B</td>
+          <td class="green">0.000%</td>
+          <td class="green">0.020%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="legal-note">
+      Points are not transferable, exchangeable, or redeemable for any form of currency or digital asset. 
+      The accrual of Points does not guarantee any future reward, token, or distribution. 
+      01 reserves the right to modify or terminate the Program at any time.
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="action-section">
+    <a href="https://01.xyz/ref/0110" target="_blank" class="ref-card">
+      <div class="ref-text">
+        <div class="ref-tag">Referral Link</div>
+        <div class="ref-title">Start Trading on 01 →</div>
+        <div class="ref-sub">Trade perps on N1 · Earn points · No KYC</div>
+      </div>
+      <div class="ref-arrow">→</div>
+    </a>
+
+    <div class="action-row">
+      <button class="action-btn twitter" onclick="shareTwitter()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.631 5.905-5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        Share on X
+      </button>
+      <button class="action-btn telegram" onclick="shareTelegram()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        Share on Telegram
+      </button>
+      <a href="https://defillama.com/protocol/01-exchange" target="_blank" class="action-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        DefiLlama
+      </a>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    * This calculator is an independent estimation tool and is not affiliated with or endorsed by 01 Exchange.<br>
+    * Estimates are based on user-defined parameters. Actual airdrop values, if any, may differ significantly.<br>
+    * Points do not guarantee any future token distribution. Refer to official 01 documentation for accurate program details.
+  </div>
+
+</div>
+
+<script>
+  let currentUnit = 'M';
+
+  const fdvInputEl    = document.getElementById('fdvInput');
+  const fdvUnitLabel  = document.getElementById('fdvUnitLabel');
+  const userPointsEl  = document.getElementById('userPoints');
+  const airdropPctEl  = document.getElementById('airdropPct');
+  const pctDisplayEl  = document.getElementById('pctDisplay');
+  // Supply fixed at 10M
+  const FIXED_SUPPLY = 10000000;
+  const resultAmountEl= document.getElementById('resultAmount');
+  const sharePercentEl= document.getElementById('sharePercent');
+  const poolSizeEl    = document.getElementById('poolSize');
+  const perPointEl    = document.getElementById('perPoint');
+
+  function getFDV() {
+    const raw = parseFloat(fdvInputEl.value) || 0;
+    return raw * (currentUnit === 'B' ? 1e9 : 1e6);
+  }
+
+  function setUnit(unit) {
+    currentUnit = unit;
+    fdvUnitLabel.textContent = unit;
+    document.querySelectorAll('.unit-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.unit === unit)
+    );
+    calculate();
+  }
+
+  function formatUSD(val) {
+    if (val >= 1e9)  return '$' + (val/1e9).toFixed(2)  + 'B';
+    if (val >= 1e6)  return '$' + (val/1e6).toFixed(2)  + 'M';
+    if (val >= 1e3)  return '$' + (val/1e3).toFixed(2)  + 'K';
+    return '$' + val.toFixed(2);
+  }
+
+  function formatPts(val) {
+    if (val >= 1e6) return (val/1e6).toFixed(1) + 'M';
+    if (val >= 1e3) return (val/1e3).toFixed(0) + 'K';
+    return val.toLocaleString();
+  }
+
+  function updateSliderFill(el, min, max) {
+    const val = parseFloat(el.value);
+    const fill = ((val - min) / (max - min)) * 100;
+    el.style.background = `linear-gradient(to right, #0a0a0a ${fill}%, #e0e0e0 ${fill}%)`;
+  }
+
+  function calculate() {
+    const fdv         = getFDV();
+    const pts         = parseFloat(userPointsEl.value) || 0;
+    const pct         = parseFloat(airdropPctEl.value) / 100;
+    const totalSupply = FIXED_SUPPLY;
+
+    const pool    = fdv * pct;
+    const perPt   = totalSupply > 0 ? pool / totalSupply : 0;
+    const reward  = pts * perPt;
+    const share   = totalSupply > 0 ? (pts / totalSupply * 100) : 0;
+
+    // Update displays
+    pctDisplayEl.textContent    = airdropPctEl.value + '%';
+    // supply fixed
+    poolSizeEl.textContent      = formatUSD(pool);
+    perPointEl.textContent      = '$' + perPt.toFixed(4);
+    sharePercentEl.textContent  = share.toFixed(6) + '%';
+
+    // Flash animation on result change
+    const newVal = formatUSD(reward);
+    if (resultAmountEl.textContent !== newVal && pts > 0) {
+      resultAmountEl.classList.remove('flash');
+      void resultAmountEl.offsetWidth;
+      resultAmountEl.classList.add('flash');
+    }
+    resultAmountEl.textContent = newVal;
+
+    // Slider fills
+    updateSliderFill(airdropPctEl, 5, 50);
+    // supply fixed
+  }
+
+  function getShareText() {
+    const pts    = parseFloat(userPointsEl.value) || 0;
+    const pct    = airdropPctEl.value;
+    const reward = resultAmountEl.textContent;
+    const fdvFmt = formatUSD(getFDV());
+    return `I'm holding ${pts.toLocaleString()} points on @01exchange!\n\nWith a ${fdvFmt} FDV and ${pct}% airdrop allocation, my estimated reward is ${reward} 🎯\n\nCalculate yours → https://01xyz.vercel.app/\n\nFollow: @0mgm4d`;
+  }
+
+  function shareTwitter() {
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(getShareText()), '_blank');
+  }
+
+  function shareTelegram() {
+    window.open('https://t.me/share/url?url=https://01xyz-calc.vercel.app&text=' + encodeURIComponent(getShareText()), '_blank');
+  }
+
+  // Event listeners
+  [fdvInputEl, userPointsEl, airdropPctEl].forEach(el =>
+    el.addEventListener('input', calculate)
+  );
+
+  // Init
+  calculate();
+</script>
+</body>
+</html>
